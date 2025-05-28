@@ -76,7 +76,7 @@ func redirectHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	// END SERVICE LAYER
 
-	http.Redirect(w, r, redirectUrl, http.StatusMovedPermanently)
+	http.Redirect(w, r, redirectUrl, http.StatusTemporaryRedirect)
 }
 
 func editShortLinkHandler(w http.ResponseWriter, r *http.Request) {
@@ -92,7 +92,7 @@ func editShortLinkHandler(w http.ResponseWriter, r *http.Request) {
 
 	// START SERVICE LAYER
 	repoRes, err := repo.EditShortLink(shortName, req.NewUrl); if err != nil {
-		pkg.InternalServerErrorDefault(w)
+		pkg.InternalServerError(w, err.Error())
 		return
 	}
 	redirectUrl :=  "/s/" + repoRes.ShortName
