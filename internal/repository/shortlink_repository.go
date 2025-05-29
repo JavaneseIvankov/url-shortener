@@ -1,8 +1,8 @@
 package repostiories
 
 import (
-	"errors"
 	"fmt"
+	"javaneseivankov/url-shortener/internal/app_errors"
 	"time"
 )
 
@@ -37,7 +37,8 @@ func NewShortLinkRepository() IShortlinkRepository {
 func (s *ShortLinkImpl) CreateRedirectLink(shortName string, url string) (*ShortLink, error) {
 	_, exists := s.store[shortName]
 	if exists {
-		return nil, errors.New("Link already exists")
+		fmt.Println("LINK EXISTS")
+		return nil, app_errors.ErrShortLinkAlreadyExists
 	}
 
 	s.store[shortName] = url
@@ -56,7 +57,7 @@ func (s *ShortLinkImpl) CreateRedirectLink(shortName string, url string) (*Short
 func (s *ShortLinkImpl) GetRedirectLink(shortName string) (*ShortLink, error) {
 	url, exists := s.store[shortName]
 	if !exists {
-		return nil, errors.New("Link doesn't exist")
+		return nil, app_errors.ErrShortLinkAlreadyExists
 	}
 	
 	res := &ShortLink{
@@ -72,7 +73,7 @@ func (s *ShortLinkImpl) GetRedirectLink(shortName string) (*ShortLink, error) {
 func (s *ShortLinkImpl) DeleteRedirectLink(shortName string) (error) {
 	_, exists := s.store[shortName]
 	if !exists {
-		return errors.New("Link with name " + shortName + "doesn't exist")
+		return app_errors.ErrShortLinkNotFound
 	}
 
 	delete(s.store, shortName)
@@ -82,8 +83,7 @@ func (s *ShortLinkImpl) DeleteRedirectLink(shortName string) (error) {
 func (s *ShortLinkImpl) EditShortLink(shortName string, newUrl string) (*ShortLink, error) {
 	_, exists := s.store[shortName]
 	if !exists {
-		fmt.Println("LINK DOESN'T EXISTS")
-		return nil, errors.New("Link doesn't exist")
+		return nil, app_errors.ErrShortLinkNotFound
 	}
 
 	s.store[shortName] = newUrl
