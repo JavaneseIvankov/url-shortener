@@ -2,8 +2,8 @@ package rest
 
 import (
 	"encoding/json"
-	"javaneseivankov/url-shortener/internal/app_errors"
 	"javaneseivankov/url-shortener/internal/dto"
+	"javaneseivankov/url-shortener/internal/errx"
 	"javaneseivankov/url-shortener/internal/service"
 	"javaneseivankov/url-shortener/pkg"
 	"net/http"
@@ -34,7 +34,7 @@ func (s *ShortLinkController) ShortenHandler(w http.ResponseWriter, r *http.Requ
 	claims, ok := ctx.Value("claims").(pkg.Claims)
 	if !ok {
 		// TODO: Add logging
-		pkg.SendError(w, app_errors.ErrInternalServerError)
+		pkg.SendError(w, errx.ErrInternalServerError)
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -54,7 +54,7 @@ func (s *ShortLinkController) DeleteHandler(w http.ResponseWriter, r *http.Reque
 	claims, ok := ctx.Value("claims").(pkg.Claims)
 	if !ok {
 		// TODO: Add logging
-		pkg.SendError(w, app_errors.ErrInternalServerError)
+		pkg.SendError(w, errx.ErrInternalServerError)
 	}
 
 	err := s.svc.DeleteShortLink(shortName, &claims)
@@ -82,7 +82,7 @@ func (s *ShortLinkController) EditShortLinkHandler(w http.ResponseWriter, r *htt
 	claims, ok := ctx.Value("claims").(pkg.Claims)
 	if !ok {
 		// TODO: Add logging
-		pkg.SendError(w, app_errors.ErrInternalServerError)
+		pkg.SendError(w, errx.ErrInternalServerError)
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {

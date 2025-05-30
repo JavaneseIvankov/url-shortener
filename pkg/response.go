@@ -3,7 +3,7 @@ package pkg
 import (
 	"encoding/json"
 	"errors"
-	"javaneseivankov/url-shortener/internal/app_errors"
+	"javaneseivankov/url-shortener/internal/errx"
 	"log"
 	"net/http"
 )
@@ -11,7 +11,7 @@ import (
 func SendJSON(w http.ResponseWriter, statusCode int, v interface{}) {
 	js, err := json.Marshal(v)
 	if err != nil {
-		http.Error(w, app_errors.ErrInternalServerError.Error(), app_errors.ErrInternalServerError.StatusCode)
+		http.Error(w, errx.ErrInternalServerError.Error(), errx.ErrInternalServerError.StatusCode)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -28,15 +28,15 @@ func SendError(w http.ResponseWriter, err error) {
 
 func SendResponse(w http.ResponseWriter, payload interface{}, statusCode int, err error) {
 	if err != nil || payload == nil {
-		var appErr *app_errors.AppError
+		var appErr *errx.AppError
 		if errors.As(err, &appErr) {
 			payload = map[string]any {
 				"error": appErr,
 			}
 		} else {
-			statusCode = app_errors.ErrInternalServerError.StatusCode
+			statusCode = errx.ErrInternalServerError.StatusCode
 			payload = map[string]any {
-				"error": app_errors.ErrInternalServerError,
+				"error": errx.ErrInternalServerError,
 			}
 		}
 	}

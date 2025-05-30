@@ -2,7 +2,7 @@ package pkg
 
 import (
 	"fmt"
-	"javaneseivankov/url-shortener/internal/app_errors"
+	"javaneseivankov/url-shortener/internal/errx"
 	"log"
 	"time"
 
@@ -66,7 +66,7 @@ func (j *JWT) VerifyToken(tokenString string, claims *Claims) (error) {
 	}
 
 	if !token.Valid {
-		return app_errors.ErrInvalidBearerToken
+		return errx.ErrInvalidBearerToken
 	}
 
 	return nil

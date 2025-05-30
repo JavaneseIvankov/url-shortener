@@ -1,7 +1,7 @@
 package repository
 
 import (
-	"javaneseivankov/url-shortener/internal/app_errors"
+	"javaneseivankov/url-shortener/internal/errx"
 	"time"
 
 	"github.com/google/uuid"
@@ -35,7 +35,7 @@ func NewShortLinkRepository() IShortLinkRepository {
 func (s *ShortLinkImpl) CreateRedirectLink(shortName string, shortLink ShortLink) (*ShortLink, error) {
     sLink, exists := s.store[shortName]
     if exists {
-        return nil, app_errors.ErrShortLinkAlreadyExists
+        return nil, errx.ErrShortLinkAlreadyExists
     }
 
     s.store[shortName] = shortLink
@@ -53,7 +53,7 @@ func (s *ShortLinkImpl) CreateRedirectLink(shortName string, shortLink ShortLink
 func (s *ShortLinkImpl) GetRedirectLink(shortName string) (*ShortLink, error) {
     sLink, exists := s.store[shortName]
     if !exists {
-        return nil, app_errors.ErrShortLinkNotFound
+        return nil, errx.ErrShortLinkNotFound
     }
 
     res := &ShortLink{
@@ -69,11 +69,11 @@ func (s *ShortLinkImpl) GetRedirectLink(shortName string) (*ShortLink, error) {
 func (s *ShortLinkImpl) DeleteRedirectLink(shortName string, userId uuid.UUID) error {
     sLink, exists := s.store[shortName]
     if !exists {
-        return app_errors.ErrShortLinkNotFound
+        return errx.ErrShortLinkNotFound
     }
 
 	 if sLink.Id != userId {
-		return app_errors.ErrShortLinkUnauthorizedOperation
+		return errx.ErrShortLinkUnauthorizedOperation
 	 }
 
     delete(s.store, shortName)
@@ -83,11 +83,11 @@ func (s *ShortLinkImpl) DeleteRedirectLink(shortName string, userId uuid.UUID) e
 func (s *ShortLinkImpl) EditShortLink(shortName string, url string, userId uuid.UUID) (*ShortLink, error) {
     sLink, exists := s.store[shortName]
     if !exists {
-        return nil, app_errors.ErrShortLinkNotFound
+        return nil, errx.ErrShortLinkNotFound
     }
 
 	 if userId !=  sLink.UserId {
-		return nil, app_errors.ErrShortLinkUnauthorizedOperation
+		return nil, errx.ErrShortLinkUnauthorizedOperation
 	 }
 
 
