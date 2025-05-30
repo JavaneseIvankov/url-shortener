@@ -2,6 +2,7 @@ package rest
 
 import (
 	"encoding/json"
+	"javaneseivankov/url-shortener/internal/app_errors"
 	"javaneseivankov/url-shortener/internal/dto"
 	"javaneseivankov/url-shortener/internal/service"
 	"javaneseivankov/url-shortener/pkg"
@@ -29,12 +30,19 @@ func NewShortLinkController(service service.IShortLinkService) *ShortLinkControl
 func (s *ShortLinkController) ShortenHandler(w http.ResponseWriter, r *http.Request) {
 	var req dto.RequestShortenLink
 
+	ctx := r.Context()
+	claims, ok := ctx.Value("claims").(pkg.Claims)
+	if !ok {
+		// TODO: Add logging
+		pkg.SendError(w, app_errors.ErrInternalServerError)
+	}
+
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		pkg.SendError(w, err)
 		return;
 	}
 
-	res, err := s.svc.CreateShortLink(req.ShortName, req.Url)
+	res, err := s.svc.CreateShortLink(req.ShortName, req.Url, &claims)
 	pkg.SendResponse(w, res, http.StatusOK, err)
 }
 
@@ -42,7 +50,14 @@ func (s *ShortLinkController) DeleteHandler(w http.ResponseWriter, r *http.Reque
 	vars := mux.Vars(r)
 	shortName := vars["shortName"]
 
-	err := s.svc.DeleteShortLink(shortName)
+	ctx := r.Context()
+	claims, ok := ctx.Value("claims").(pkg.Claims)
+	if !ok {
+		// TODO: Add logging
+		pkg.SendError(w, app_errors.ErrInternalServerError)
+	}
+
+	err := s.svc.DeleteShortLink(shortName, &claims)
 	pkg.SendResponse(w, map[string]any{}, http.StatusOK, err)
 }
 
@@ -63,11 +78,18 @@ func (s *ShortLinkController) EditShortLinkHandler(w http.ResponseWriter, r *htt
 
 	var req dto.RequestEditShortLink
 
+	ctx := r.Context()
+	claims, ok := ctx.Value("claims").(pkg.Claims)
+	if !ok {
+		// TODO: Add logging
+		pkg.SendError(w, app_errors.ErrInternalServerError)
+	}
+
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		pkg.SendError(w, err)
 		return
 	}
 
-	res, err := s.svc.EditShortLink(shortName, req.NewUrl);
+	res, err := s.svc.EditShortLink(shortName, req.NewUrl, &claims);
 	pkg.SendResponse(w, res, http.StatusOK, err)
 }

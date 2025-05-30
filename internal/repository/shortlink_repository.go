@@ -1,98 +1,104 @@
 package repository
 
 import (
-	"fmt"
 	"javaneseivankov/url-shortener/internal/app_errors"
 	"time"
+
+	"github.com/google/uuid"
 )
 
-func uuid() uint {
-	return 10
-}
-
 type ShortLink struct {
-	id uint
-	ShortName string
-	OriginalUrl string
-	createdAt string
+	 Id uuid.UUID
+    ShortName  string
+    OriginalUrl string
+    CreatedAt  time.Time
+    UserId     uuid.UUID
 }
 
 type IShortLinkRepository interface {
-	CreateRedirectLink(shortName string, url string) (*ShortLink, error)
-	GetRedirectLink(shortName string) (*ShortLink, error)
-	DeleteRedirectLink(shortName string) error
-	EditShortLink(shortName string, newUrl string) (*ShortLink, error)
+    CreateRedirectLink(shortName string, shortLink ShortLink) (*ShortLink, error)
+    GetRedirectLink(shortName string) (*ShortLink, error)
+    DeleteRedirectLink(shortName string, userId uuid.UUID) error
+    EditShortLink(shortLink string, url string, userId  uuid.UUID) (*ShortLink, error)
 }
 
 type ShortLinkImpl struct {
-	store map[string]string 
+    store map[string]ShortLink
 }
 
 func NewShortLinkRepository() IShortLinkRepository {
-	return &ShortLinkImpl{
-		store: make(map[string]string),
-}
-} 
-
-func (s *ShortLinkImpl) CreateRedirectLink(shortName string, url string) (*ShortLink, error) {
-	_, exists := s.store[shortName]
-	if exists {
-		fmt.Println("LINK EXISTS")
-		return nil, app_errors.ErrShortLinkAlreadyExists
-	}
-
-	s.store[shortName] = url
-	
-	res := &ShortLink{
-		id: uuid(),
-		ShortName: shortName,
-		OriginalUrl:  url,
-		createdAt: time.Now().Format("2006-01-02"),
-	}
-
-	return res, nil
+    return &ShortLinkImpl{
+        store: make(map[string]ShortLink),
+    }
 }
 
+func (s *ShortLinkImpl) CreateRedirectLink(shortName string, shortLink ShortLink) (*ShortLink, error) {
+    sLink, exists := s.store[shortName]
+    if exists {
+        return nil, app_errors.ErrShortLinkAlreadyExists
+    }
+
+    s.store[shortName] = shortLink
+
+    res := &ShortLink{
+        Id:         sLink.Id,
+        ShortName:  shortName,
+        OriginalUrl: shortLink.OriginalUrl,
+        CreatedAt:  time.Now(),
+    }
+
+    return res, nil
+}
 
 func (s *ShortLinkImpl) GetRedirectLink(shortName string) (*ShortLink, error) {
-	url, exists := s.store[shortName]
-	if !exists {
-		return nil, app_errors.ErrShortLinkAlreadyExists
-	}
-	
-	res := &ShortLink{
-		id: uuid(),
-		ShortName: shortName,
-		OriginalUrl:  url,
-		createdAt: time.Now().Format("2006-12-06"),
-	}
+    sLink, exists := s.store[shortName]
+    if !exists {
+        return nil, app_errors.ErrShortLinkNotFound
+    }
 
-	return res, nil
+    res := &ShortLink{
+        Id:         sLink.Id,
+        ShortName:  shortName,
+        OriginalUrl: sLink.OriginalUrl,
+        CreatedAt:  sLink.CreatedAt,
+    }
+
+    return res, nil
 }
 
-func (s *ShortLinkImpl) DeleteRedirectLink(shortName string) (error) {
-	_, exists := s.store[shortName]
-	if !exists {
-		return app_errors.ErrShortLinkNotFound
-	}
+func (s *ShortLinkImpl) DeleteRedirectLink(shortName string, userId uuid.UUID) error {
+    sLink, exists := s.store[shortName]
+    if !exists {
+        return app_errors.ErrShortLinkNotFound
+    }
 
-	delete(s.store, shortName)
-	return nil;
+	 if sLink.Id != userId {
+		return app_errors.ErrShortLinkUnauthorizedOperation
+	 }
+
+    delete(s.store, shortName)
+    return nil
 }
 
-func (s *ShortLinkImpl) EditShortLink(shortName string, newUrl string) (*ShortLink, error) {
-	_, exists := s.store[shortName]
-	if !exists {
-		return nil, app_errors.ErrShortLinkNotFound
-	}
+func (s *ShortLinkImpl) EditShortLink(shortName string, url string, userId uuid.UUID) (*ShortLink, error) {
+    sLink, exists := s.store[shortName]
+    if !exists {
+        return nil, app_errors.ErrShortLinkNotFound
+    }
 
-	s.store[shortName] = newUrl
-	res := &ShortLink{
-		id: uuid(),
-		ShortName: shortName,
-		OriginalUrl: newUrl,
-		createdAt: time.Now().Format("2006-12-06"),
-	}
+	 if userId !=  sLink.UserId {
+		return nil, app_errors.ErrShortLinkUnauthorizedOperation
+	 }
 
-	return res, nil
+
+    res := &ShortLink{
+        Id:         sLink.Id,
+        ShortName:  shortName,
+        OriginalUrl: url,
+        CreatedAt:  time.Now(),
+    }
+
+    s.store[shortName] = *res
+
+    return res, nil
 }
