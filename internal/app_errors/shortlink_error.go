@@ -11,4 +11,8 @@ var(
 		http.StatusInternalServerError,
 		"Shortlink already exists!",
 		)
+	ErrShortLinkUnauthorizedOperation = NewAppError(
+		http.StatusInternalServerError,
+		"Unauthorized to perform such operation",
+	)
 )

@@ -25,4 +25,13 @@ var(
 		http.StatusInternalServerError,
 		"Something went wrong in our end",
 	)
+	ErrInvalidBearerToken = NewAppError(
+		http.StatusUnauthorized,
+		"Invalid bearer token",
+	)
+	ErrExpiredBearerToken = NewAppError(
+		http.StatusUnauthorized,
+		"Session expired",
+	)
+
 )
