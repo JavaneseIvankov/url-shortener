@@ -1,9 +1,9 @@
-package middlewares
+package middleware
 
 import (
 	"log"
 	"net/http"
-//	"runtime/debug"
+	// "runtime/debug"
 )
 
 func LoggingMiddleware(next http.Handler) http.Handler {

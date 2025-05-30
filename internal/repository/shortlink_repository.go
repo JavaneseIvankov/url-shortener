@@ -1,4 +1,4 @@
-package repostiories
+package repository
 
 import (
 	"fmt"
@@ -17,7 +17,7 @@ type ShortLink struct {
 	createdAt string
 }
 
-type IShortlinkRepository interface {
+type IShortLinkRepository interface {
 	CreateRedirectLink(shortName string, url string) (*ShortLink, error)
 	GetRedirectLink(shortName string) (*ShortLink, error)
 	DeleteRedirectLink(shortName string) error
@@ -28,7 +28,7 @@ type ShortLinkImpl struct {
 	store map[string]string 
 }
 
-func NewShortLinkRepository() IShortlinkRepository {
+func NewShortLinkRepository() IShortLinkRepository {
 	return &ShortLinkImpl{
 		store: make(map[string]string),
 }
