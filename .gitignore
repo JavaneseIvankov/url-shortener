@@ -1,2 +1,4 @@
 tmp
 .ignore.*
+.env*
+.env.
