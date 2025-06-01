@@ -4,21 +4,21 @@ import (
 	"encoding/json"
 	"errors"
 	"javaneseivankov/url-shortener/internal/errx"
-	"log"
+	_logger "javaneseivankov/url-shortener/pkg/logger"
 	"net/http"
 )
 
 func SendJSON(w http.ResponseWriter, statusCode int, v interface{}) {
 	js, err := json.Marshal(v)
 	if err != nil {
+		_logger.Error("response.SendJSON: Failed to marshall value", "value", v)
 		http.Error(w, errx.ErrInternalServerError.Error(), errx.ErrInternalServerError.StatusCode)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
    if _, writeErr := w.Write(js); writeErr != nil {
-		// FIXME: gak yakin
-		log.Printf("failed to write response: %v", err)
+		_logger.Error("response.SendJSON: Failed to write response", "error", err)
     }
 }
 

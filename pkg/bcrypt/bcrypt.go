@@ -1,11 +1,16 @@
 package bcrypt
 
-import "golang.org/x/crypto/bcrypt"
+import (
+	"javaneseivankov/url-shortener/pkg/logger"
+
+	"golang.org/x/crypto/bcrypt"
+)
 
 func Hash(plainText string) (string, error) {
 	bytes, err := bcrypt.GenerateFromPassword([]byte(plainText), bcrypt.DefaultCost)
 
 	if err != nil {
+		logger.Error("bcrypt.Hash: Failed to hash password", "error", err)
 		return "", err
 	}
 

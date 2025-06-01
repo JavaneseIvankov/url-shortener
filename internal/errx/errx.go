@@ -41,5 +41,8 @@ var(
 		http.StatusUnauthorized,
 		"Session expired",
 	)
-
+	ErrxMalformedBearerToken = NewAppError(
+		http.StatusUnauthorized,
+		"Bearer token format is not right!",
+	)
 )
