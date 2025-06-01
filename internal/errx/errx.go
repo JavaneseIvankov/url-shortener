@@ -25,6 +25,14 @@ var(
 		http.StatusInternalServerError,
 		"Something went wrong in our end",
 	)
+	ErrNoBearerToken = NewAppError(
+		http.StatusUnauthorized,
+		"No bearer token found",
+	)
+	ErrBearerTokenInvalidFormat = NewAppError(
+		http.StatusUnauthorized,
+		"Invalid bearer token format",
+	)
 	ErrInvalidBearerToken = NewAppError(
 		http.StatusUnauthorized,
 		"Invalid bearer token",
