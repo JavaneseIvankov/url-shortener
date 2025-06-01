@@ -13,6 +13,7 @@ import (
 	"os"
 
 	"github.com/gorilla/mux"
+	"github.com/joho/godotenv"
 )
 
 func handlePing(w http.ResponseWriter, r *http.Request) {
@@ -20,16 +21,25 @@ func handlePing(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatalln("Error loading .env file")
+	}
+
+	environ := os.Getenv("ENV")
 	jwtSecret := os.Getenv("JWT_SECRET")
 	jwtTTL := os.Getenv("JWT_TTL")
 
-	if jwtSecret == "" || jwtTTL == "" {
+	if environ == "" {
+		log.Fatalln("ENV must be set")
+	}
+
+	if jwtSecret == "" || jwtTTL == ""  {
 		log.Fatalln("JWT_SECRET and JWT_TTL must be set")
 	}
 
+	logger.Init(environ)
 	jwtAuth := jwt.NewJWT(jwtSecret, jwtTTL)
-	// TODO: Get from .env
-	logger.Init("development")
 	
 	router := mux.NewRouter()
 	router.Use(middleware.LoggingMiddleware)
@@ -61,7 +71,7 @@ func main() {
 	v1.HandleFunc("/edit/{shortName}", apply(shortLinkCtrl.EditShortLinkHandler, requireAuth))
 	v1.HandleFunc("/delete/{shortName}", apply(shortLinkCtrl.DeleteShortLinkHandler, requireAuth))
 
-	err := http.ListenAndServe(":4321", router)
+	err = http.ListenAndServe(":4321", router)
 	if err != nil {
 		log.Fatalf("Failed to start server: %v", err)
 	}
