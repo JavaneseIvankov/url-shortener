@@ -3,90 +3,123 @@ package service
 import (
 	"javaneseivankov/url-shortener/internal/dto"
 	"javaneseivankov/url-shortener/internal/repository"
-	"javaneseivankov/url-shortener/pkg"
+	"javaneseivankov/url-shortener/internal/repository/model"
+	"javaneseivankov/url-shortener/pkg/jwt"
+	"javaneseivankov/url-shortener/pkg/logger"
 
 	"github.com/google/uuid"
 )
 
 type IShortLinkService interface {
-	CreateShortLink(shortName string, url string, claims *pkg.Claims) (*dto.ResponseShortenLink, error)
-	EditShortLink(shortName string, url string, claims *pkg.Claims) (*dto.ResponseEditShortLink, error)
-	GetRedirectLink(shortName string) (*dto.ResponseGetShortLink, error)
-	DeleteShortLink(shortName string, claims *pkg.Claims) error 
+    CreateShortLink(shortName string, url string, claims *jwt.Claims) (*dto.ResponseShortenLink, error)
+    EditShortLink(shortName string, url string, claims *jwt.Claims) (*dto.ResponseEditShortLink, error)
+    GetRedirectLink(shortName string) (*dto.ResponseGetShortLink, error)
+    DeleteShortLink(shortName string, claims *jwt.Claims) error
 }
 
 type ShortLinkService struct {
-	repo repository.IShortLinkRepository
+    repo repository.IShortLinkRepository
 }
 
 func NewShortLinkService(repository repository.IShortLinkRepository) *ShortLinkService {
-	return &ShortLinkService{
-		repo: repository,
-	}
+    return &ShortLinkService{
+        repo: repository,
+    }
 }
 
-func (s *ShortLinkService) CreateShortLink(shortName string, url string, claims *pkg.Claims) (*dto.ResponseShortenLink, error) {
-   generatedId, err := uuid.NewUUID()
-   if err != nil {
-      return nil, err
-   }
+func (s *ShortLinkService) CreateShortLink(shortName string, url string, claims *jwt.Claims) (*dto.ResponseShortenLink, error) {
+    logger.Info("ShortLinkService.CreateShortLink: creating short link", "shortName", shortName, "url", url)
 
-   sLink := repository.ShortLink{
-      Id: generatedId,
-      ShortName: shortName,
-      OriginalUrl: url,
-      UserId: claims.UserID,
-   }
+    generatedId, err := uuid.NewUUID()
+    if err != nil {
+        logger.Error("ShortLinkService.CreateShortLink: failed to generate UUID", "error", err)
+        return nil, err
+    }
 
-	repoRes, err := s.repo.CreateRedirectLink(shortName, sLink);
+    userId, err := uuid.Parse(claims.UserID)
+    if err != nil {
+        logger.Error("ShortLinkService.CreateShortLink: failed to parse user ID", "userID", claims.UserID, "error", err)
+        return nil, err
+    }
 
-	 if err != nil {
-		return nil, err
-	} 
-	redirectUrl :=  "/s/" + repoRes.ShortName
+    sLink := model.ShortLink{
+        Id:         generatedId,
+        ShortName:  shortName,
+        OriginalUrl: url,
+        UserId:     userId,
+    }
 
-	res := dto.ResponseShortenLink{
-		Url: redirectUrl,
-	}
-	return &res, nil
+    repoRes, err := s.repo.CreateRedirectLink(shortName, sLink)
+    if err != nil {
+        logger.Error("ShortLinkService.CreateShortLink: failed to create redirect link in repository", "shortName", shortName, "error", err)
+        return nil, err
+    }
+
+    redirectUrl := "/s/" + repoRes.ShortName
+    res := dto.ResponseShortenLink{
+        Url: redirectUrl,
+    }
+
+    logger.Info("ShortLinkService.CreateShortLink: short link created successfully", "shortName", shortName, "redirectUrl", redirectUrl)
+    return &res, nil
 }
 
-func (s *ShortLinkService) EditShortLink(shortName string, url string, claims *pkg.Claims) (*dto.ResponseEditShortLink, error) {
-   sLink := repository.ShortLink{
-      ShortName: shortName,
-      OriginalUrl: url,
-   }
-   
-	_, err := s.repo.EditShortLink(shortName, url, claims.UserID)
+func (s *ShortLinkService) EditShortLink(shortName string, url string, claims *jwt.Claims) (*dto.ResponseEditShortLink, error) {
+    logger.Info("ShortLinkService.EditShortLink: editing short link", "shortName", shortName, "url", url)
 
-	if err != nil {
-		return nil, err
-	}
+    userId, err := uuid.Parse(claims.UserID)
+    if err != nil {
+        logger.Error("ShortLinkService.EditShortLink: failed to parse user ID", "userID", claims.UserID, "error", err)
+        return nil, err
+    }
 
-	res := dto.ResponseEditShortLink{
-		Url: sLink.OriginalUrl,
-		ShortName: sLink.ShortName,
-	}
+    _, err = s.repo.EditShortLink(shortName, url, userId)
+    if err != nil {
+        logger.Error("ShortLinkService.EditShortLink: failed to edit short link in repository", "shortName", shortName, "error", err)
+        return nil, err
+    }
 
-	return &res, nil
+    res := dto.ResponseEditShortLink{
+        Url:       url,
+        ShortName: shortName,
+    }
+
+    logger.Info("ShortLinkService.EditShortLink: short link edited successfully", "shortName", shortName, "url", url)
+    return &res, nil
 }
-
 
 func (s *ShortLinkService) GetRedirectLink(shortName string) (*dto.ResponseGetShortLink, error) {
-	slink, err := s.repo.GetRedirectLink(shortName)
+    logger.Info("ShortLinkService.GetRedirectLink: retrieving redirect link", "shortName", shortName)
 
-	if err != nil {
-		return nil, err
-	}
+    slink, err := s.repo.GetRedirectLink(shortName)
+    if err != nil {
+        logger.Error("ShortLinkService.GetRedirectLink: failed to retrieve redirect link from repository", "shortName", shortName, "error", err)
+        return nil, err
+    }
 
-	res := dto.ResponseGetShortLink{
-		Url: slink.OriginalUrl,
-	}
+    res := dto.ResponseGetShortLink{
+        Url: slink.OriginalUrl,
+    }
 
-	return &res, nil
+    logger.Info("ShortLinkService.GetRedirectLink: redirect link retrieved successfully", "shortName", shortName, "url", slink.OriginalUrl)
+    return &res, nil
 }
 
-func (s *ShortLinkService) DeleteShortLink(shortName string, claims *pkg.Claims) error {
-	err := s.repo.DeleteRedirectLink(shortName, claims.UserID)
-	return err;
+func (s *ShortLinkService) DeleteShortLink(shortName string, claims *jwt.Claims) error {
+    logger.Info("ShortLinkService.DeleteShortLink: deleting short link", "shortName", shortName)
+
+    userId, err := uuid.Parse(claims.UserID)
+    if err != nil {
+        logger.Error("ShortLinkService.DeleteShortLink: failed to parse user ID", "userID", claims.UserID, "error", err)
+        return err
+    }
+
+    err = s.repo.DeleteRedirectLink(shortName, userId)
+    if err != nil {
+        logger.Error("ShortLinkService.DeleteShortLink: failed to delete short link in repository", "shortName", shortName, "error", err)
+        return err
+    }
+
+    logger.Info("ShortLinkService.DeleteShortLink: short link deleted successfully", "shortName", shortName)
+    return nil
 }
