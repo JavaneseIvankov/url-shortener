@@ -6,6 +6,7 @@ import (
 	"javaneseivankov/url-shortener/internal/repository"
 	"javaneseivankov/url-shortener/internal/service"
 	"javaneseivankov/url-shortener/pkg"
+	"javaneseivankov/url-shortener/pkg/db"
 	"javaneseivankov/url-shortener/pkg/jwt"
 	"javaneseivankov/url-shortener/pkg/logger"
 	"log"
@@ -38,8 +39,13 @@ func main() {
 		log.Fatalln("JWT_SECRET and JWT_TTL must be set")
 	}
 
+	// TODO: Refactor to avoid error, temporal coupling
 	logger.Init(environ)
 	jwtAuth := jwt.NewJWT(jwtSecret, jwtTTL)
+
+	if err := db.Init(); err != nil {
+		panic("Failed to initialize DB: " + err.Error())
+	}
 	
 	router := mux.NewRouter()
 	router.Use(middleware.LoggingMiddleware)
