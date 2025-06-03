@@ -55,7 +55,7 @@ func main() {
 	apiRouter := router.PathPrefix("/api").Subrouter()
 	v1 := apiRouter.PathPrefix("/v1").Subrouter()
 
-	shortLinkRepo := repository.NewShortLinkRepository()
+	shortLinkRepo := repository.NewShortLinkRepositoryDB(db.DB)
 	shortLinkService := service.NewShortLinkService(shortLinkRepo)
 	shortLinkCtrl := rest.NewShortLinkController(shortLinkService)
 

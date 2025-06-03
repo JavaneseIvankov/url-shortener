@@ -6,6 +6,7 @@ import (
 	"javaneseivankov/url-shortener/internal/errx"
 	"javaneseivankov/url-shortener/pkg"
 	"javaneseivankov/url-shortener/pkg/jwt"
+	"javaneseivankov/url-shortener/pkg/logger"
 	"net/http"
 	"strings"
 )
@@ -21,6 +22,7 @@ func AuthMiddleware(jwt jwt.JWT) func(next http.Handler) http.Handler {
 
 			parts := strings.Split(tokenString, " ")
 			if len(parts) != 2 || parts[0] != "Bearer" {
+				logger.Debug("Bearer token splitted", "auth_header_value", tokenString,"partsLength", len(parts))
 				pkg.SendError(w, errx.ErrBearerTokenInvalidFormat)
 				return
 			}

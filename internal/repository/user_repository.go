@@ -2,6 +2,7 @@ package repository
 
 import (
 	"errors"
+	"javaneseivankov/url-shortener/internal/errx"
 	"javaneseivankov/url-shortener/internal/repository/model"
 	"javaneseivankov/url-shortener/pkg/logger"
 	"sync"
@@ -70,7 +71,7 @@ func (r *UserRepositoryImpl) GetUserByEmail(email string) (model.User, error) {
     user, exists := r.usersByEmail[email]
     if !exists {
         logger.Error("UserRepository.GetUserByEmail: user with this email does not exist", "email", email)
-        return model.User{}, errors.New("user with this email does not exist")
+        return model.User{}, errx.ErrEmailDoesntExist
     }
     logger.Info("UserRepository.GetUserByEmail: user retrieved successfully", "email", email)
     return user, nil
@@ -83,7 +84,7 @@ func (r *UserRepositoryImpl) GetUserByID(id uuid.UUID) (model.User, error) {
     user, exists := r.usersByID[id]
     if !exists {
         logger.Error("UserRepository.GetUserByID: user with this ID does not exist", "userID", id)
-        return model.User{}, errors.New("user with this ID does not exist")
+        return model.User{}, errx.ErrUserIdDoesntExist
     }
     logger.Info("UserRepository.GetUserByID: user retrieved successfully", "userID", id)
     return user, nil

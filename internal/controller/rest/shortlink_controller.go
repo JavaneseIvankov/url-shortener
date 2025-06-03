@@ -44,7 +44,7 @@ func (s *ShortLinkController) ShortenHandler(w http.ResponseWriter, r *http.Requ
     }
 
     logger.Info("ShortLinkController.ShortenHandler: calling service.CreateShortLink", "shortName", req.ShortName, "url", req.Url)
-    res, err := s.svc.CreateShortLink(req.ShortName, req.Url, claims)
+    res, err := s.svc.CreateShortLink(r.Context(), req.ShortName, req.Url, claims)
     if err != nil {
         logger.Error("ShortLinkController.ShortenHandler: failed to create short link", "shortName", req.ShortName, "error", err)
     }
@@ -66,7 +66,7 @@ func (s *ShortLinkController) DeleteShortLinkHandler(w http.ResponseWriter, r *h
     }
 
     logger.Info("ShortLinkController.DeleteShortLinkHandler: calling service.DeleteShortLink", "shortName", shortName)
-    err := s.svc.DeleteShortLink(shortName, claims)
+    err := s.svc.DeleteShortLink(r.Context(), shortName, claims)
     if err != nil {
         logger.Error("ShortLinkController.DeleteShortLinkHandler: failed to delete short link", "shortName", shortName, "error", err)
     }
@@ -80,7 +80,7 @@ func (s *ShortLinkController) RedirectHandler(w http.ResponseWriter, r *http.Req
     shortName := vars["shortName"]
 
     logger.Info("ShortLinkController.RedirectHandler: calling service.GetRedirectLink", "shortName", shortName)
-    res, err := s.svc.GetRedirectLink(shortName)
+    res, err := s.svc.GetRedirectLink(r.Context(), shortName)
     if err != nil {
         logger.Error("ShortLinkController.RedirectHandler: failed to retrieve redirect link", "shortName", shortName, "error", err)
         pkg.SendError(w, err)
@@ -114,7 +114,7 @@ func (s *ShortLinkController) EditShortLinkHandler(w http.ResponseWriter, r *htt
     }
 
     logger.Info("ShortLinkController.EditShortLinkHandler: calling service.EditShortLink", "shortName", shortName, "newUrl", req.NewUrl)
-    res, err := s.svc.EditShortLink(shortName, req.NewUrl, claims)
+    res, err := s.svc.EditShortLink(r.Context(), shortName, req.NewUrl, claims)
     if err != nil {
         logger.Error("ShortLinkController.EditShortLinkHandler: failed to edit short link", "shortName", shortName, "error", err)
     }
