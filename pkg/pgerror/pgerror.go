@@ -2,6 +2,7 @@ package pgerror
 
 import (
 	"errors"
+	"javaneseivankov/url-shortener/pkg/logger"
 
 	"github.com/jackc/pgx/v5/pgconn"
 )
@@ -33,22 +34,29 @@ func (h *PgErrHandler) AddPgErr(errCode string, constraintName string, err error
 		ConstraintName: constraintName,
 		Err: err,
 	})
+	logger.Debug("pgerror.AddPgErr: Added new PgErr", "errcode", errCode, "constraint", constraintName, "error", err)
 	return h
 }
 
 func (h *PgErrHandler) Handle(err error) error {
-	var pgErr *pgconn.PgError
-	ok := errors.As(err, &pgErr)
+    var pgErr *pgconn.PgError
+    ok := errors.As(err, &pgErr)
 
-	if !ok {
-		return err;
-	}
+    if !ok {
+        logger.Debug("pgerror.Handle: Error is not a PgError, returning original error", "error", err.Error())
+        return err
+    }
 
-	for _, e := range h.pgErrors {
-		if pgErr.Code == e.ErrCode && pgErr.ConstraintName == e.ConstraintName {
-			return e.Err
-		}
-	}
-	
-	return err;
+    logger.Debug("pgerror.Handle: Handling PgError", "code", pgErr.Code, "constraint", pgErr.ConstraintName)
+
+    for _, e := range h.pgErrors {
+        logger.Debug("pgerror.Handle: Checking PgError against registered errors", "registeredCode", e.ErrCode, "registeredConstraint", e.ConstraintName)
+        if pgErr.Code == e.ErrCode && pgErr.ConstraintName == e.ConstraintName {
+            logger.Debug("pgerror.Handle: Match found, returning mapped error", "code", e.ErrCode, "constraint", e.ConstraintName)
+            return e.Err
+        }
+    }
+
+    logger.Debug("pgerror.Handle: No match found, returning original error", "code", pgErr.Code, "constraint", pgErr.ConstraintName)
+    return err
 }

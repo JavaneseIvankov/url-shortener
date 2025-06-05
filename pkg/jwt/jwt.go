@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"javaneseivankov/url-shortener/internal/errx"
-	repository "javaneseivankov/url-shortener/internal/repository/model"
+	"javaneseivankov/url-shortener/internal/repository/model"
 	"javaneseivankov/url-shortener/pkg/logger"
 	"time"
 
@@ -34,7 +34,7 @@ func NewJWT(secretKey string, ttlString string) JWT {
         panic(fmt.Sprintf("Failed to parse TTL: %v", err))
     }
 
-    logger.Info("JWT initialized", "TTLString", ttlString, "TTL", ttl.String())
+    logger.Info("JWT.NewJWT: JWT initialized", "TTLString", ttlString, "TTL", ttl.String())
 
     return JWT{
         Secret: []byte(secretKey),
@@ -42,7 +42,7 @@ func NewJWT(secretKey string, ttlString string) JWT {
     }
 }
 
-func (j *JWT) GenerateToken(user repository.User) (string, error) {
+func (j *JWT) GenerateToken(user *model.User) (string, error) {
     logger.Debug("Generating token", "TTL", j.TTL.String())
 
     claims := Claims{
@@ -63,7 +63,7 @@ func (j *JWT) GenerateToken(user repository.User) (string, error) {
         return "", err
     }
 
-    logger.Info("Token generated successfully", "userID", user.ID.String())
+    logger.Info("JWT.GenerateToken: Token generated successfully", "userID", user.ID.String())
     return signedToken, nil
 }
 
@@ -96,6 +96,6 @@ func (j *JWT) VerifyToken(tokenString string) (*Claims, error) {
         return nil, errx.ErrInvalidBearerToken
     }
 
-    logger.Info("Token verified successfully", "claims", claims)
+    logger.Info("JWT.VerifyToken: Token verified successfully", "claims", claims)
     return claims, nil
 }
