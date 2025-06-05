@@ -6,7 +6,7 @@ import (
 	"javaneseivankov/url-shortener/internal/repository"
 	"javaneseivankov/url-shortener/internal/service"
 	"javaneseivankov/url-shortener/pkg"
-	"javaneseivankov/url-shortener/pkg/db"
+	"javaneseivankov/url-shortener/pkg/database"
 	"javaneseivankov/url-shortener/pkg/jwt"
 	"javaneseivankov/url-shortener/pkg/logger"
 	"log"
@@ -43,7 +43,16 @@ func main() {
 	logger.Init(environ)
 	jwtAuth := jwt.NewJWT(jwtSecret, jwtTTL)
 
-	if err := db.Init(); err != nil {
+	 
+	pgDb := database.NewPgDB(
+		os.Getenv("POSTGRES_USER"),
+		os.Getenv("POSTGRES_PASSWORD"),
+		os.Getenv("POSTGRES_DB"),
+		os.Getenv("DB_HOST"),
+		os.Getenv("DB_PORT"),
+	)
+	db, err := pgDb.Init()
+	if err != nil {
 		panic("Failed to initialize DB: " + err.Error())
 	}
 	
@@ -55,7 +64,7 @@ func main() {
 	apiRouter := router.PathPrefix("/api").Subrouter()
 	v1 := apiRouter.PathPrefix("/v1").Subrouter()
 
-	shortLinkRepo := repository.NewShortLinkRepositoryDB(db.DB)
+	shortLinkRepo := repository.NewShortLinkRepositoryDB(db)
 	shortLinkService := service.NewShortLinkService(shortLinkRepo)
 	shortLinkCtrl := rest.NewShortLinkController(shortLinkService)
 
