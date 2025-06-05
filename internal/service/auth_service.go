@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"errors"
 	"javaneseivankov/url-shortener/internal/dto"
 	"javaneseivankov/url-shortener/internal/repository"
@@ -21,7 +22,7 @@ func NewAuthService(userRepo repository.IUserRepository, jwtAuth jwt.JWT) *AuthS
     return &AuthService{r: userRepo, j: jwtAuth}
 }
 
-func (auth *AuthService) RegisterUser(email string, password string) (*dto.RegisterResponse, error) {
+func (auth *AuthService) RegisterUser(ctx context.Context, email string, password string) (*dto.RegisterResponse, error) {
     logger.Info("AuthService.RegisterUser: registering user", "email", email)
 
     hashedPassword, err := bcrypt.Hash(password)
@@ -38,13 +39,13 @@ func (auth *AuthService) RegisterUser(email string, password string) (*dto.Regis
     }
 
     logger.Info("AuthService.RegisterUser: creating user in repository", "email", email)
-    if err = auth.r.CreateUser(user); err != nil {
+    if err = auth.r.CreateUser(ctx, user); err != nil {
         logger.Error("AuthService.RegisterUser: failed to create user in repository", "email", email, "error", err)
         return nil, err
     }
 
     logger.Info("AuthService.RegisterUser: generating token for user", "email", email)
-    token, err := auth.j.GenerateToken(user)
+    token, err := auth.j.GenerateToken(&user)
     if err != nil {
         logger.Error("AuthService.RegisterUser: failed to generate token", "email", email, "error", err)
         return nil, err
@@ -59,17 +60,17 @@ func (auth *AuthService) RegisterUser(email string, password string) (*dto.Regis
     return res, nil
 }
 
-func (auth *AuthService) LoginUser(email string, password string) (*dto.LoginResponse, error) {
+func (auth *AuthService) LoginUser(ctx context.Context,email string, password string) (*dto.LoginResponse, error) {
     logger.Info("AuthService.LoginUser: logging in user", "email", email)
 
-    user, err := auth.r.GetUserByEmail(email)
-    if err != nil {
-        logger.Error("AuthService.LoginUser: invalid email or password", "email", email, "error", err)
+    user, err := auth.r.GetUserByEmail(ctx, email)
+    if err != nil || user == nil {
+        logger.Error("AuthService.LoginUser: Error getting user from repository", "email", email, "error", err)
         return nil, errors.New("invalid email or password")
     }
 
-    if ok := bcrypt.Compare(user.Password, password); !ok {
-        logger.Error("AuthService.LoginUser: invalid email or password", "email", email)
+    if ok := bcrypt.Compare(password, user.Password); !ok {
+        logger.Error("AuthService.LoginUser: invalid email or password", "email", email, "storedPassword", user.Password, "password", password)
         return nil, errors.New("invalid email or password")
     }
 

@@ -31,7 +31,7 @@ func (c *AuthController) RegisterUser(w http.ResponseWriter, r *http.Request) {
     }
 
     logger.Info("AuthController.RegisterUser: calling authService.RegisterUser", "email", req.Email)
-    res, err := c.authService.RegisterUser(req.Email, req.Password)
+    res, err := c.authService.RegisterUser(r.Context() ,req.Email, req.Password)
     if err != nil {
         logger.Error("AuthController.RegisterUser: failed to register user", "email", req.Email, "error", err)
         pkg.SendError(w, err)
@@ -53,7 +53,7 @@ func (c *AuthController) LoginUser(w http.ResponseWriter, r *http.Request) {
     }
 
     logger.Info("AuthController.LoginUser: calling authService.LoginUser", "email", req.Email)
-    res, err := c.authService.LoginUser(req.Email, req.Password)
+    res, err := c.authService.LoginUser(r.Context(), req.Email, req.Password)
     if err != nil {
         logger.Error("AuthController.LoginUser: failed to login user", "email", req.Email, "error", err)
         pkg.SendError(w, err)

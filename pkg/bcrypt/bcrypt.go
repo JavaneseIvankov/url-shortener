@@ -14,10 +14,17 @@ func Hash(plainText string) (string, error) {
 		return "", err
 	}
 
+	logger.Debug("bcrypt.Hash: Success hash", "hashedLength", len(bytes), "hashed", string(bytes))
 	return string(bytes), nil
 }
 
 func Compare(password string, hashed string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(hashed), []byte(password))
+
+	if err != nil {
+		logger.Error("bcrypt.Compare: Error comparing hash and password", "error", err)
+		logger.Debug("bcrypt.Compare: Error comparing hash and password", "hashedLength", len(hashed), "hashed", hashed)
+	}
+
 	return err == nil
 }
