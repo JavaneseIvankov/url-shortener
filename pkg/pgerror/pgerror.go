@@ -42,6 +42,10 @@ func (h *PgErrHandler) Handle(err error) error {
     var pgErr *pgconn.PgError
     ok := errors.As(err, &pgErr)
 
+	 if err == nil {
+		return nil
+	 }
+
     if !ok {
         logger.Debug("pgerror.Handle: Error is not a PgError, returning original error", "error", err.Error())
         return err
