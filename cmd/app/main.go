@@ -29,19 +29,20 @@ func main() {
 
 	environ := os.Getenv("ENV")
 	jwtSecret := os.Getenv("JWT_SECRET")
-	jwtTTL := os.Getenv("JWT_TTL")
+	jwtAccessTokenTTL := os.Getenv("JWT_ACCESS_TOKEN_TTL")
+	jwtRefreshTokenTTL := os.Getenv("JWT_REFRESH_TOKEN_TTL")
 
 	if environ == "" {
 		log.Fatalln("ENV must be set")
 	}
 
-	if jwtSecret == "" || jwtTTL == ""  {
-		log.Fatalln("JWT_SECRET and JWT_TTL must be set")
+	if jwtSecret == "" || jwtAccessTokenTTL == ""  || jwtRefreshTokenTTL == "" {
+		log.Fatalln("JWT_SECRET and JWT_ACCESS_TOKEN_TTL  and JWT_REFRESH_TOKEN_TTL must be set")
 	}
 
 	// TODO: Refactor to avoid error, temporal coupling
 	logger.Init(environ)
-	jwtAuth := jwt.NewJWT(jwtSecret, jwtTTL)
+	jwtAuth := jwt.NewJWT(jwtSecret, jwtAccessTokenTTL, jwtRefreshTokenTTL)
 
 	 
 	pgDb := database.NewPgDB(
@@ -68,7 +69,7 @@ func main() {
 	shortLinkService := service.NewShortLinkService(shortLinkRepo)
 	shortLinkCtrl := rest.NewShortLinkController(shortLinkService)
 
-	authRepo := repository.NewUserRepository()
+	authRepo := repository.NewUserRepositoryDB(db)
 	authService := service.NewAuthService(authRepo, jwtAuth)
 	authCtrl := rest.NewAuthController(authService)
 
@@ -81,6 +82,7 @@ func main() {
 
 	v1.HandleFunc("/auth/login/", authCtrl.LoginUser)
 	v1.HandleFunc("/auth/register/", authCtrl.RegisterUser)
+	v1.HandleFunc("/auth/refresh-session/", authCtrl.RefreshSession)
 
 	v1.HandleFunc("/shorten", apply(shortLinkCtrl.ShortenHandler, requireAuth))
 	v1.HandleFunc("/edit/{shortName}", apply(shortLinkCtrl.EditShortLinkHandler, requireAuth))

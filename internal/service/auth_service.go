@@ -45,18 +45,25 @@ func (auth *AuthService) RegisterUser(ctx context.Context, email string, passwor
     }
 
     logger.Info("AuthService.RegisterUser: generating token for user", "email", email)
-    token, err := auth.j.GenerateToken(&user)
+    accessToken, err := auth.j.GenerateAccessToken(&user)
     if err != nil {
-        logger.Error("AuthService.RegisterUser: failed to generate token", "email", email, "error", err)
+        logger.Error("AuthService.RegisterUser: failed to generate access token", "email", email, "error", err)
         return nil, err
     }
 
+    refreshToken, err := auth.j.GenerateRefreshToken(&user)
+    if err != nil {
+        logger.Error("AuthService.RegisterUser: failed to generate refresh token", "email", email, "error", err)
+        return nil, err
+    }
     res := &dto.RegisterResponse{
-        AccessToken:  token,
-        RefreshToken: token,
+        AccessToken:  accessToken,
+        RefreshToken: refreshToken,
     }
 
     logger.Info("AuthService.RegisterUser: user registered successfully", "email", email)
+    logger.Info("AuthService.RefreshSession: session refreshed successfully")
+    logger.Debug("AuthService.RefreshSession: session refreshed successfully", "accessToken", accessToken, "refreshToken", refreshToken)
     return res, nil
 }
 
@@ -75,16 +82,44 @@ func (auth *AuthService) LoginUser(ctx context.Context,email string, password st
     }
 
     logger.Info("AuthService.LoginUser: generating token for user", "email", email)
-    token, err := auth.j.GenerateToken(user)
+    accessToken, err := auth.j.GenerateAccessToken(user)
     if err != nil {
         logger.Error("AuthService.LoginUser: failed to generate token", "email", email, "error", err)
         return nil, err
     }
 
+    refreshToken, err := auth.j.GenerateRefreshToken(user)
+    if err != nil {
+        logger.Error("AuthService.LoginUser: failed to generate refresh token", "email", email, "error", err)
+        return nil, err
+    }
+
     res := &dto.LoginResponse{
-        AccessToken: token,
+        AccessToken: accessToken,
+		  RefreshToken: refreshToken,
     }
 
     logger.Info("AuthService.LoginUser: user logged in successfully", "email", email)
+    logger.Debug("AuthService.LoginUser: user logged in successfully", "accessToken", accessToken)
+    return res, nil
+}
+
+func (auth *AuthService) RefreshSession(ctx context.Context, refreshToken string) (*dto.RefreshSessionResponse, error) {
+    logger.Info("AuthService.RefreshSession: refreshing session", "refreshToken", refreshToken)
+	 
+
+    accessToken, err := auth.j.RenewAccessToken(refreshToken)
+    if err != nil {
+        logger.Error("AuthService.RefreshSession: failed to renew access token", "refreshToken", refreshToken, "error", err)
+        return nil, err
+    }
+
+    res := &dto.RefreshSessionResponse{
+        AccessToken:  accessToken,
+        RefreshToken: refreshToken,
+    }
+
+    logger.Info("AuthService.RefreshSession: session refreshed successfully")
+    logger.Debug("AuthService.RefreshSession: session refreshed successfully", "accessToken", accessToken, "refreshToken", refreshToken)
     return res, nil
 }

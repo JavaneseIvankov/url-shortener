@@ -63,3 +63,22 @@ func (c *AuthController) LoginUser(w http.ResponseWriter, r *http.Request) {
     logger.Info("AuthController.LoginUser: user logged in successfully", "email", req.Email)
     pkg.SendResponse(w, res, http.StatusOK, err)
 }
+
+func (c *AuthController) RefreshSession(w http.ResponseWriter, r *http.Request) {
+	logger.Info("AuthController.RefreshSession: refreshing session...")
+
+	var req dto.RefreshSessionRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+        logger.Error("AuthController.RefreshSession: failed to decode request body", "error", err)
+        pkg.SendError(w, err)
+        return
+	}
+
+	res, err := c.authService.RefreshSession(r.Context(), req.RefreshToken)
+	if err != nil {
+		logger.Error("AuthController.RefreshSession: failed to refresh session", "error", err)
+		pkg.SendError(w, err)
+	}
+
+	pkg.SendResponse(w, res, http.StatusOK, err)
+}
